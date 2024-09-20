@@ -83,10 +83,6 @@ module.exports = {
         // Generate a unique ID for our new build phase.
         var id = xcodeProject.generateUuid();
         // Create the build phase.
-        if (!xcodeProject.hash.project.objects.PBXShellScriptBuildPhase) {
-            xcodeProject.hash.project.objects.PBXShellScriptBuildPhase = {};
-        }
-
         xcodeProject.hash.project.objects.PBXShellScriptBuildPhase[id] = {
             isa: "PBXShellScriptBuildPhase",
             buildActionMask: 2147483647,
@@ -238,6 +234,15 @@ post_install do |installer|
             config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '${IPHONEOS_DEPLOYMENT_TARGET}'
             if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"
                 config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+            end
+        end
+        if target.name == 'BoringSSL-GRPC'
+            target.source_build_phase.files.each do |file|
+                if file.settings && file.settings['COMPILER_FLAGS']
+                    flags = file.settings['COMPILER_FLAGS'].split
+                    flags.reject! { |flag| flag == '-GCC_WARN_INHIBIT_ALL_WARNINGS' }
+                    file.settings['COMPILER_FLAGS'] = flags.join(' ')
+                end
             end
         end
     end
